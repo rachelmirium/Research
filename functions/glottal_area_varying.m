@@ -1,0 +1,37 @@
+function [Agp] = glottal_area_varying(Ap1, Ap2, F01, F02, Fs, D)
+% Ap1: original peak amplitude
+% Ap2: final peak amplitude
+% F01: original fundamental frequency
+% F02: final fundamental frequency
+% Fs: sampling rate
+% D: duration of sample
+
+Times = zeros(Fs * D, 1); %vectors for plotting Agp vs time
+Agp = zeros(Fs * D, 1);
+dt = 1.0 / Fs;
+%returns vector of Agp values
+
+for n = 1:(Fs * D)
+    F0 = F01 + n * (F02 - F01) / (Fs * D);
+    Ap = Ap1 + n * (Ap2 - Ap1) / (Fs * D);
+    T0 = 1.0 / F0;
+    t1 = .36 * T0;
+    t2 = .26 * T0;
+    a = pi / t1;
+    b = 1.0 / (1.0 - cos(pi * t2 / t1));
+    Times(n) = n/Fs;
+    t = mod((n * dt), T0);
+    if t < t1
+        Agp(n) = .5 * Ap * (1.0 - cos(a * t));
+    elseif t < (t1 + t2)
+        Agp(n) = Ap * (1.0 - b + b * cos(a * (t - t1)));
+    else
+        Agp(n) = 0;
+    end
+end
+
+figure;
+plot(Times(1:1000), Agp(1:1000));
+
+end
+
