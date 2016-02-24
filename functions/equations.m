@@ -2,7 +2,7 @@
 %Used .00001 instead of 0 for areas of the vocal tract to
 %avoid dividing by 0 errors (page 211)
 
-function[P] = equations(M, Ap, F0, Fs, D)
+function[] = equations(M, Ap, F0, Fs, D)
     A = calcA(M, Ap, F0, Fs, D);
     X = calcX(M, Fs, D);
     S = calcS(A);
@@ -20,7 +20,7 @@ function[P] = equations(M, Ap, F0, Fs, D)
     
     %Q = calcQ(L, U, Fs); %what is U?
     
-    [V, Vc, Qwl, Qwc, P, U3] = calcRest(C, Lw, Cw, Yw, B, A, Ud, Fs); %what is U?
+    [V, Vc, Qwl, Qwc, P, U3] = calcRest(C, Lw, Cw, Yw, B, U, Ud, Fs); %what is U?
     
     %F = calcF(B, Ud, V, Q);
     
@@ -29,7 +29,7 @@ function[P] = equations(M, Ap, F0, Fs, D)
     %Vc = calcVc(C, P, Fs);
     %Qwl = calcQwl(Lw, U3, Fs);
     %Qwc = calcQwc(Cw, U3, Fs);
-    %P = calcP(B, U, Ud, V); %what is U?
+    %P = calcP(B, U, Ud, V);
     %U3 = calcU3(Yw, P, Qwl, Qwc);
 end
 
