@@ -6,7 +6,6 @@ function [Agp] = glottal_area_varying(Ap1, Ap2, F01, F02, Fs, D)
 % Fs: sampling rate
 % D: duration of sample
 
-Times = zeros(Fs * D, 1); %vectors for plotting Agp vs time
 Agp = zeros(Fs * D, 1);
 dt = 1.0 / Fs;
 %returns vector of Agp values
@@ -26,12 +25,14 @@ for n = 1:(Fs * D)
     elseif t < (t1 + t2)
         Agp(n) = Ap * (1.0 - b + b * cos(a * (t - t1)));
     else
-        Agp(n) = 0;
+        Agp(n) = .00001;
     end
 end
+Agp(Fs*D) = .00001;
 
 figure;
-plot(Times(1:1000), Agp(1:1000));
+t = dt:dt:D;
+plot(t, Agp);
 
 end
 
