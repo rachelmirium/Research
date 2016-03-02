@@ -2,7 +2,7 @@
 %Used .00001 instead of 0 for areas of the vocal tract to
 %avoid dividing by 0 errors (page 211)
 
-function[b] = equations(AreaFunction, Xj, Fs)
+function[] = equations(AreaFunction, Xj, Fs)
     sz = size(AreaFunction);
     N = sz(1);
     P0 = 1.14 * 10^-3;
@@ -14,7 +14,7 @@ function[b] = equations(AreaFunction, Xj, Fs)
     Psub = 8*980.39;
     T = 1/Fs;
     
-   [Sj, Lj, Rj, Cj, Lw, Rw, Cw, Yw, bj, Hj, Fj, Ud, Q, V, Vc, Qwl, Qwc, Pj, u3] = deal(zeros(sz));
+   [Sj, Lj, Rj, Cj, Lw, Rw, Cw, Yw, bj, Hj, Fj, Ud, Q, ] = deal(zeros(sz));
     
     
     for n = 1:N
@@ -26,7 +26,9 @@ function[b] = equations(AreaFunction, Xj, Fs)
         Rw(n) = b / (Xj * (Sj(n))^2);
         Cw(n) = Xj * (Sj(n))^2 / k;
         Yw(n) = 1 / (2*Lw(n)/T - Rw(n) + T/2*Cw(n));
-        bj(n) = 1 / (2*Cj(n)/T + Yw(n));   
+        bj(n) = 1 / (2*Cj(n)/T + Yw(n));
+        
+        
     end
 end
 
