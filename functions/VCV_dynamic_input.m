@@ -41,8 +41,10 @@ for j = 1:M
     secondX = linspace(X2id(j), X3id(j), 5000);
     newX = [firstX secondX];
     
-    A(:,j) = transpose(newA(j));
-    x(:,j) = transpose(newX(j));
+    A(:,j) = transpose(newA);
+    x(:,j) = transpose(newX);
+    
+    A = max(A, .1);
 end
 
 end
