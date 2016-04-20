@@ -1,4 +1,4 @@
-function signal = friction_static_vt_shape(A, X)
+function signal = friction_single_section(A, X)
 
 M = length(A);
 
@@ -60,8 +60,9 @@ for j = 1:M
     Cw(j) = T/(2*sqrt(pi)) * k / (A(j) * X(j));
     Yw(j) = 1 / (Lw(j) + Cw(j) + Rw(j));
     b(j) = 1 / (C(j) + Yw(j));      % b1->b(1)
-    Namp(j) = Udc * Udc / A(j) * 5 * 2 * 10^-8;
+    %Namp(j) = 0;
 end
+    Namp(Xc + 1) = Udc * Udc / A(Xc + 1) * 5 * 2 * 10^-8;
     %Ud = 0; % Because Area and Length are constant over time
     
     
