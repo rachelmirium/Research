@@ -1,7 +1,9 @@
 function signal = friction_dynamic_vt_shape(A, X)
-
+%(Area, Length, Ap, F0, Fs, duration)
 A = max(A, .1);
 M = size(A,2);
+%A = zeros(M, 1); % area function; This should become an array with length M
+%X = zeros(M, 1); % length of section; Also an array with length M
 Ap = 0.2;
 F0 = 100;
 Fs = 10000;
@@ -21,17 +23,17 @@ kc = 1.42;
 
 [Agp] = glottal_area(Ap, F0, Fs, duration);
 
-Agp = max(Agp,0.001);
+Agp = max(Agp,0.001); % To avoid divison be zero later
 
 N=length(Agp);
 
 Ag0 = zeros(N,1); %calculate slow-varying glottal area?
-Ag = Agp + Ag0; %Ag = sum of fast and slow varying components
+Ag = Agp + Ag0;
 
-Ulips = zeros(N,1);
+Ulips = zeros(N,1); % this will be the output
 
 Ud = 0; 
-Q(1) = 0; Q(2) = 0;
+Q(1) = 0; Q(2) = 0; %initial value; it will change
 V(1) = 0; V(2) = 0;
 Vc(1) = 0; Qwl(1) = 0; Qwc(1) = 0;
 [Namp, L, R, C, Lw, Rw, Cw, Yw, b, Ud, H, V, F, U, Q, P, Vc, u3, Qwl, Qwc] = deal(zeros(M+1,1));
@@ -62,7 +64,7 @@ for j = 1:M
     %Namp(j) = Udc * Udc / A(n,j) * 5 * 2 * 10^-8;
     Ud(j) = (A(n,j)*X(n,j) - A(n-1,j)*X(n-1,j)) / T;
 end
-    Namp(Xc+1) = Udc * Udc / A(n,Xc+1) * 5 * 2 * 10^-8; %insert noise at segment after constriction
+    Namp(Xc+1) = Udc * Udc / A(n,Xc+1) * 5 * 2 * 10^-8;
     H(1) = -(Lg + L(1) + Rg + R(1) + b(1));
 
 for j = 2:M
@@ -75,6 +77,7 @@ end
     
     H(M+1) = -(b(M+1) + b(M) + R(M) + L(M)); 
     
+    % refresh force constants
 for j = 1:M  
     V(j) = Vc(j) - Yw(j) * (Qwl(j) - Qwc(j));
 end
@@ -86,7 +89,8 @@ for j = 2:M
 end
 
     F(M+1) = b(M) * (Ud(M+1) - V(M)) + b(M+1) * V(M) - Q(M+1);
-
+    
+    % Create linear system and solve
 Hs = zeros(M+1);
 Hs(1,1) = H(1);
 Hs(1,2) = b(1);
@@ -128,5 +132,5 @@ end
 
 signal = diff(Ulips);% (diff(U2) - mean(diff(U2)))/std(diff(U2));
 
-plot(signal(1:500));
+%plot(signal(1:500));
 soundsc(signal, Fs);

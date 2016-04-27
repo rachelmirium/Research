@@ -43,8 +43,7 @@ for j = 1:M
     
     A(:,j) = transpose(newA);
     x(:,j) = transpose(newX);
-    
-    A = max(A, .1);
+ 
 end
 
 end

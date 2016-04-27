@@ -1,8 +1,24 @@
-function signal = friction_dynamic_vt_shape(A, X)
+function create_airflow_graph(A, X)
+    figure;
+    title('Airflow vs supraglottal constriction size');
+    xlabel('Cross-sectional area of supraglottal constriction (cm^2)');
+    ylabel('Volume velocity (cm^3/s)');
+    glottal_areas = [.02 .05 .1 .2 .5];
+    hold on;
+    points = zeros(10000, 2);
+    for i = glottal_areas
+        points = create_points(A, X, i);
+        Ac = points(:,1);
+        Udc = points(:, 2);
+        plot(Ac, 1/100*Udc);
+    end
+    legend('Ag = .5 cm^2', 'Ag = .2 cm^2', 'Ag = .1 cm^2', 'Ag = .05 cm^2', 'Ag = .02 cm^2');
+end
 
-A = max(A, .1);
+
+function points = create_points(A, X, Ap)
 M = size(A,2);
-Ap = 0.2;
+%Ap = 0.2;
 F0 = 100;
 Fs = 10000;
 duration = 1;
@@ -20,32 +36,35 @@ glt_thck=0.3;
 kc = 1.42;
 
 [Agp] = glottal_area(Ap, F0, Fs, duration);
+Agp = max(Agp,0.001); % To avoid divison be zero later
 
-Agp = max(Agp,0.001);
+N=length(Agp); % this is how many samples I will have
 
-N=length(Agp);
-
-Ag0 = zeros(N,1); %calculate slow-varying glottal area?
-Ag = Agp + Ag0; %Ag = sum of fast and slow varying components
-
-Ulips = zeros(N,1);
+Ulips = zeros(N,1); % this will be the output
 
 Ud = 0; 
-Q(1) = 0; Q(2) = 0;
+Q(1) = 0; Q(2) = 0; %initial value; it will change
 V(1) = 0; V(2) = 0;
 Vc(1) = 0; Qwl(1) = 0; Qwc(1) = 0;
 [Namp, L, R, C, Lw, Rw, Cw, Yw, b, Ud, H, V, F, U, Q, P, Vc, u3, Qwl, Qwc] = deal(zeros(M+1,1));
 U(1)=1;
 U(2)=2;
 
+[Ac, Udc] = deal(zeros(N, 1));
+points = zeros(N, 2);
+
 for n=2:N
-    [Ac, Xc] = min(A(n,:));
-    a1 = kc * rho * (1/(Ap * Ap) + 1/(Ac * Ac));
-    b1 = 12 * glt_len * glt_len * glt_thck / (Ap * Ap * Ap) + 8 * pi * mu * Xc / (Ac * Ac);
+    [Ac(n), Xc] = min(A(n,:));
+    
+    a1 = kc * rho * (1/(Ap * Ap) + 1/(Ac(n) * Ac(n)));
+    b1 = 12 * glt_len * glt_len * glt_thck / (Ap * Ap * Ap) + 8 * pi * mu * Xc / (Ac(n) * Ac(n));
     c1 = -1 * Psub;
     p = [a1 b1 c1];
     r = roots(p);
-    Udc = -1*r(1);
+    Udc(n) = -1*r(1);
+    
+    points(n, 1) = Ac(n);
+    points(n, 2) = Udc(n);
    
     Lg = (2/T) * rho * glt_thck / Agp(n);
     Rg = (12 * mu * glt_len^2 * glt_thck) / (Agp(n)^3) + ((1.38/2) * rho * abs(U(1)) / (Agp(n)^2));
@@ -59,10 +78,10 @@ for j = 1:M
     Cw(j) = T/(2*sqrt(pi)) * k / (A(n,j) * X(n,j));
     Yw(j) = 1 / (Lw(j) + Cw(j) + Rw(j));
     b(j) = 1 / (C(j) + Yw(j));
-    %Namp(j) = Udc * Udc / A(n,j) * 5 * 2 * 10^-8;
+    %Namp(j) = Udc(n) * Udc(n) / A(n,j) * 5 * 2 * 10^-8;
     Ud(j) = (A(n,j)*X(n,j) - A(n-1,j)*X(n-1,j)) / T;
 end
-    Namp(Xc+1) = Udc * Udc / A(n,Xc+1) * 5 * 2 * 10^-8; %insert noise at segment after constriction
+    Namp(Xc+1) = Udc(n) * Udc(n) / A(n,Xc+1) * 5 * 2 * 10^-8;
     H(1) = -(Lg + L(1) + Rg + R(1) + b(1));
 
 for j = 2:M
@@ -75,6 +94,7 @@ end
     
     H(M+1) = -(b(M+1) + b(M) + R(M) + L(M)); 
     
+    % refresh force constants
 for j = 1:M  
     V(j) = Vc(j) - Yw(j) * (Qwl(j) - Qwc(j));
 end
@@ -86,7 +106,8 @@ for j = 2:M
 end
 
     F(M+1) = b(M) * (Ud(M+1) - V(M)) + b(M+1) * V(M) - Q(M+1);
-
+    
+    % Create linear system and solve
 Hs = zeros(M+1);
 Hs(1,1) = H(1);
 Hs(1,2) = b(1);
@@ -126,7 +147,10 @@ end
     
 end
 
-signal = diff(Ulips);% (diff(U2) - mean(diff(U2)))/std(diff(U2));
+%signal = diff(Ulips);% (diff(U2) - mean(diff(U2)))/std(diff(U2));
 
-plot(signal(1:500));
-soundsc(signal, Fs);
+%plot(signal(1:500));
+%soundsc(signal, Fs);
+
+points = sortrows(points);
+end
