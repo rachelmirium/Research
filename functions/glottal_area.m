@@ -14,7 +14,6 @@ b = 1.0 / (1.0 - cos(pi * t2 / t1));
 dt = 1.0 / Fs;
 
 for n = 1:(Fs * D)
-    Times(n) = n/Fs;
     t = mod((n * dt), T0);
     if t < t1
         Agp(n) = .5 * Ap * (1.0 - cos(a * t));

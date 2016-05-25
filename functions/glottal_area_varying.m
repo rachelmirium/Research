@@ -18,7 +18,6 @@ for n = 1:(Fs * D)
     t2 = .26 * T0;
     a = pi / t1;
     b = 1.0 / (1.0 - cos(pi * t2 / t1));
-    Times(n) = n/Fs;
     t = mod((n * dt), T0);
     if t < t1
         Agp(n) = .5 * Ap * (1.0 - cos(a * t));

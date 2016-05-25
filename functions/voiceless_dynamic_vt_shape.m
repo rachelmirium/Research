@@ -1,13 +1,14 @@
-function signal = friction_dynamic_vt_shape(A, X)
-%(Area, Length, Ap, F0, Fs, duration)
+function signal = voiceless_dynamic_vt_shape(A, X, Ag0, Ap, F0)
+
+N = size(A, 1);
+if N ~= size(X, 1) || N ~= length(Ag0) || N ~= length(Ap) || N ~= length(F0)
+    error('Array dimensions are mismatched');
+end
+
 A = max(A, .1);
 M = size(A,2);
-%A = zeros(M, 1); % area function; This should become an array with length M
-%X = zeros(M, 1); % length of section; Also an array with length M
-Ap = 0.2;
-F0 = 100;
+maxAp = max(Ap);
 Fs = 10000;
-duration = 1;
 
 rho = 1.14 * 10^-3;
 c = 3.5 * 10^4;
@@ -21,19 +22,16 @@ glt_len=1.2;
 glt_thck=0.3;
 kc = 1.42;
 
-[Agp] = glottal_area(Ap, F0, Fs, duration);
+[Agp] = dynamic_glottal_area(Ap, F0, Fs);
+Agp = max(Agp,0.001);
+Ag = Ag0 + Agp;
 
-Agp = max(Agp,0.001); % To avoid divison be zero later
+N=length(Ag);
 
-N=length(Agp);
-
-Ag0 = zeros(N,1); %calculate slow-varying glottal area?
-Ag = Agp + Ag0;
-
-Ulips = zeros(N,1); % this will be the output
+Ulips = zeros(N,1);
 
 Ud = 0; 
-Q(1) = 0; Q(2) = 0; %initial value; it will change
+Q(1) = 0; Q(2) = 0;
 V(1) = 0; V(2) = 0;
 Vc(1) = 0; Qwl(1) = 0; Qwc(1) = 0;
 [Namp, L, R, C, Lw, Rw, Cw, Yw, b, Ud, H, V, F, U, Q, P, Vc, u3, Qwl, Qwc] = deal(zeros(M+1,1));
@@ -42,15 +40,15 @@ U(2)=2;
 
 for n=2:N
     [Ac, Xc] = min(A(n,:));
-    a1 = kc * rho * (1/(Ap * Ap) + 1/(Ac * Ac));
-    b1 = 12 * glt_len * glt_len * glt_thck / (Ap * Ap * Ap) + 8 * pi * mu * Xc / (Ac * Ac);
+    a1 = kc * rho * (1/(maxAp * maxAp) + 1/(Ac * Ac));
+    b1 = 12 * glt_len * glt_len * glt_thck / (maxAp * maxAp * maxAp) + 8 * pi * mu * Xc / (Ac * Ac);
     c1 = -1 * Psub;
     p = [a1 b1 c1];
     r = roots(p);
     Udc = -1*r(1);
    
-    Lg = (2/T) * rho * glt_thck / Agp(n);
-    Rg = (12 * mu * glt_len^2 * glt_thck) / (Agp(n)^3) + ((1.38/2) * rho * abs(U(1)) / (Agp(n)^2));
+    Lg = (2/T) * rho * glt_thck / Ag(n);
+    Rg = (12 * mu * glt_len^2 * glt_thck) / (Ag(n)^3) + ((1.38/2) * rho * abs(U(1)) / (Ag(n)^2));
     
 for j = 1:M   
     L(j) = (1/T) * rho * X(n,j) / A(n,j);
@@ -61,10 +59,9 @@ for j = 1:M
     Cw(j) = T/(2*sqrt(pi)) * k / (A(n,j) * X(n,j));
     Yw(j) = 1 / (Lw(j) + Cw(j) + Rw(j));
     b(j) = 1 / (C(j) + Yw(j));
-    %Namp(j) = Udc * Udc / A(n,j) * 5 * 2 * 10^-8;
     Ud(j) = (A(n,j)*X(n,j) - A(n-1,j)*X(n-1,j)) / T;
 end
-    Namp(Xc+1) = Udc * Udc / A(n,Xc+1) * 5 * 2 * 10^-8;
+    Namp(Xc+1) = Udc * Udc / A(n,Xc+1) * 5 * 2 * 10^-8; %insert noise at segment after constriction
     H(1) = -(Lg + L(1) + Rg + R(1) + b(1));
 
 for j = 2:M
@@ -77,7 +74,6 @@ end
     
     H(M+1) = -(b(M+1) + b(M) + R(M) + L(M)); 
     
-    % refresh force constants
 for j = 1:M  
     V(j) = Vc(j) - Yw(j) * (Qwl(j) - Qwc(j));
 end
@@ -89,8 +85,7 @@ for j = 2:M
 end
 
     F(M+1) = b(M) * (Ud(M+1) - V(M)) + b(M+1) * V(M) - Q(M+1);
-    
-    % Create linear system and solve
+
 Hs = zeros(M+1);
 Hs(1,1) = H(1);
 Hs(1,2) = b(1);
@@ -131,6 +126,5 @@ end
 end
 
 signal = diff(Ulips);% (diff(U2) - mean(diff(U2)))/std(diff(U2));
-
-%plot(signal(1:500));
+plot(signal);
 soundsc(signal, Fs);
