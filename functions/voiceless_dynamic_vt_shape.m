@@ -2,7 +2,7 @@ function signal = voiceless_dynamic_vt_shape(A, X, Ag0, Ap, F0)
 
 N = size(A, 1);
 if N ~= size(X, 1) || N ~= length(Ag0) || N ~= length(Ap) || N ~= length(F0)
-    error('Array dimensions are mismatched');
+   error('Array dimensions are mismatched');
 end
 
 A = max(A, .1);
