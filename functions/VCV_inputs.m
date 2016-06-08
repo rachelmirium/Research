@@ -35,7 +35,11 @@ for i = 1:length-1
         t = 'pchip';
     else t = 'linear';
     end
-    Ag0(x(i):x(i+1)-1) = interp1(x, v, x(i):x(i+1)-1, t);
+    if strcmp(s, 'SET') == 1
+        Ag0(x(i):x(i+1)-1) = 0;
+    else
+        Ag0(x(i):x(i+1)-1) = interp1(x, v, x(i):x(i+1)-1, t);
+    end
 end
 
 %create Agp array
@@ -55,9 +59,12 @@ for i = 1:length-1
         t = 'pchip';
     else t = 'linear';
     end
-    Ap(x(i):x(i+1)-1) = interp1(x, v, x(i):x(i+1)-1, t);
+    if strcmp(s, 'SET') == 1
+        Ap(x(i):x(i+1)-1) = 0;
+    else
+        Ap(x(i):x(i+1)-1) = interp1(x, v, x(i):x(i+1)-1, t);
+    end
 end
-
 %create F0 array
 
 F0data = textscan(F0ID, '%f %f %s');
@@ -75,9 +82,13 @@ for i = 1:length-1
         t = 'pchip';
     else t = 'linear';
     end
-    F0(x(i):x(i+1)-1) = interp1(x, v, x(i):x(i+1)-1, t);
+    if strcmp(s, 'SET') == 1
+        F0(x(i):x(i+1)-1) = 0;
+    else
+        F0(x(i):x(i+1)-1) = interp1(x, v, x(i):x(i+1)-1, t);
+    end
 end
-F0(3000:min(5000, end)) = 100;
+F0(1:end) = 100;
 
 %create area function
 
@@ -112,6 +123,15 @@ for j = 1:M
         A(x(i):x(i+1)-1,j) = interp1(x, Av, x(i):x(i+1)-1, 'pchip');
         X(x(i):x(i+1)-1,j) = interp1(x, Xv, x(i):x(i+1)-1, 'pchip');
     end
+end
+
+if size(A,1) < maxlength
+    Ag0 = Ag0(1:size(A,1));
+    Ap = Ap(1:size(A,1));
+    F0 = F0(1:size(A,1));
+else
+    A = A(1:maxlength,:);
+    X = X(1:maxlength,:);
 end
 
 %close files

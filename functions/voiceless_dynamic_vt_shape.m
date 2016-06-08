@@ -5,7 +5,7 @@ if N ~= size(X, 1) || N ~= length(Ag0) || N ~= length(Ap) || N ~= length(F0)
    error('Array dimensions are mismatched');
 end
 
-A = max(A, .1);
+%A = max(A, .1);
 M = size(A,2);
 maxAp = max(Ap);
 Fs = 10000;
@@ -60,8 +60,9 @@ for j = 1:M
     Yw(j) = 1 / (Lw(j) + Cw(j) + Rw(j));
     b(j) = 1 / (C(j) + Yw(j));
     Ud(j) = (A(n,j)*X(n,j) - A(n-1,j)*X(n-1,j)) / T;
+    %Namp(j) = Udc * Udc / A(n,j) * 5 * 2 * 10^-8;
 end
-    Namp(Xc+1) = Udc * Udc / A(n,Xc+1) * 5 * 2 * 10^-8; %insert noise at segment after constriction
+    Namp(min(Xc+1,M)) = Udc * Udc / A(n,min(Xc+1,M)) * 5 * 2 * 10^-8; %insert noise at segment after constriction
     H(1) = -(Lg + L(1) + Rg + R(1) + b(1));
 
 for j = 2:M
@@ -124,7 +125,6 @@ end
     V(M+1) = -2 * Srad * P(M+1) + V(M+1);
     
 end
-
 signal = diff(Ulips);% (diff(U2) - mean(diff(U2)))/std(diff(U2));
 plot(signal);
 soundsc(signal, Fs);
