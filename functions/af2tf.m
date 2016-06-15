@@ -1,6 +1,8 @@
 function [transfer_function, frequency] = af2tf(A, X)
-%A = zeros(M, 1); % area function; This should become an array with length M
-%X = zeros(M, 1); % distance from glottis; Also an array with length M
+% Calculates transfer function from area function by inserting an impulse
+% as glottal excitation
+% A = zeros(M, 1); % area function; This should become an array with length M
+% X = zeros(M, 1); % distance from glottis; Also an array with length M
 
 Fs = 40000; % sampling rate
 
