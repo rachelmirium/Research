@@ -9,7 +9,7 @@ for n = 1:N
     t1 = .36 * T0;
     t2 = .26 * T0;
     a = pi / t1;
-    b = 1.0 / (1.0 - cos(pi * t2 / t1));
+    b = 1.0 / (1.0 - cos(a * t2));
     t = mod((n * dt), T0);
     if t < t1
         Agp(n) = .5 * Ap(n) * (1.0 - cos(a * t));
