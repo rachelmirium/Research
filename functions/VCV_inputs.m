@@ -83,13 +83,12 @@ for i = 1:length-1
     else t = 'linear';
     end
     if strcmp(s, 'SET') == 1
-        F0(x(i):x(i+1)-1) = 0;
+        F0(x(i):x(i+1)-1) = .0001;
     else
         F0(x(i):x(i+1)-1) = interp1(x, v, x(i):x(i+1)-1, t);
     end
 end
 F0(1:end) = 100;
-
 %create area function
 
 width = str2double(fgetl(AFID));
