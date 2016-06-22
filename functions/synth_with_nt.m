@@ -1,11 +1,11 @@
-function signal = synth_with_nt(A, X, AN, XN, K, Ag0, Ap, F0)
+function signal = synth_with_nt(A, X, Ag0, Ap, F0, Anc, AN, XN)
 
 N = size(A, 1);
 if N ~= size(X, 1) || N ~= length(Ag0) || N ~= length(Ap) || N ~= length(F0)
    error('Array dimensions are mismatched');
 end
 
-Nlength = size(AN);
+Nlength = size(AN, 1);
 
 %A = max(A, .1);
 M = size(A,2);
@@ -27,8 +27,6 @@ kc = 1.42;
 [Agp] = dynamic_glottal_area(Ap, F0, Fs);
 Agp = max(Agp,0.001);
 Ag = Ag0 + Agp;
-plot(Ag);
-figure
 
 N=length(Ag);
 
@@ -98,8 +96,8 @@ for j = 2:M
     H(j) = - (L(j-1) + L(j) + R(j-1) + R(j) + b(j-1) + b(j));
 end
 
-    H(K) = -(b(K) + L(K) + R(K));
-    H(K+1) = -(b(K+1) + L(K+1) + R(K+1));
+    %H(K) = -(b(K) + L(K) + R(K));
+    %H(K+1) = -(b(K+1) + L(K+1) + R(K+1));
     
     Grad = 9 * pi^2 * A(n,M) / (128 * rho * c);
     Srad = T*(1.5 * pi * sqrt(pi * A(n,M))) / (8 * rho);
@@ -115,8 +113,8 @@ end
 for j = 2:M
     F(j)=b(j-1)*(Ud(j-1)-V(j-1)) - b(j)*(Ud(j)-V(j)) - Q(j);
 end
-    F(K+1) = -B(K+1) * (UD(K+1) - V(K+1)) - Q(K+1);
-    F(K) = B(K) * (UD(K) - V(K)) - Q(K);
+    %F(K+1) = -B(K+1) * (UD(K+1) - V(K+1)) - Q(K+1);
+    %F(K) = B(K) * (UD(K) - V(K)) - Q(K);
     F(M+1) = b(M) * (Ud(M+1) - V(M)) + b(M+1) * V(M) - Q(M+1);
 
 for j = 1:Nlength
@@ -151,7 +149,6 @@ end
 HNs(Nlength+1,Nlength+1) = BN(Nlength);
 HNs(Nlength+1,Nlength+2) = HN(Nlength+1);
 
-
     U = inv(Hs) * F;
     UN = inv(HNs) * FN;
     Ulips(n) = U(M+1);
@@ -174,8 +171,8 @@ for j = 2:M
    Qwc(j) = 2 * Cw(j) * u3(j) + Qwc(j);
 end
 
-Q(K) = 2 * L(K) * U(K) - Q(K);
-Q(K+1) = 2*L(K+1) * U(K+1) - Q(K+1);
+%Q(K) = 2 * L(K) * U(K) - Q(K);
+%Q(K+1) = 2*L(K+1) * U(K+1) - Q(K+1);
 
     % lips
     P(M+1) = b(M+1) * (U(M+1) + V(M+1));

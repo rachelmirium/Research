@@ -1,4 +1,4 @@
-function [A, X, Ag0, Ap, F0] = VCV_inputs(folder, Fs)
+function [A, X, Ag0, Ap, F0, Anc, AN, XN] = VCV_nasal_inputs(folder, Fs)
 %takes folder as input (i.e., VCV/real2d/asa-area)
 
 scale = Fs / 1000;
@@ -9,10 +9,12 @@ fileAF = strcat(folder, '/file.AF');
 fileAg0 = strcat(folder, '/file.AG0');
 fileAgp = strcat(folder, '/file.AGP');
 fileF0 = strcat(folder, '/file.F0');
+fileAnc = strcat(folder, '/nt.are');
 AFID = fopen(fileAF);
 Ag0ID = fopen(fileAg0);
 AgpID = fopen(fileAgp);
 F0ID = fopen(fileF0);
+AncID = fopen(fileAnc);
 
 %initialize arrays
 
@@ -21,8 +23,14 @@ length = Ag0data{1}(1);
 [x, v] = deal(zeros(length, 1));
 maxlength = Ag0data{1}(length+1)*scale;
 
-[Ag0, Ap, F0] = deal(zeros(maxlength, 1));
+[Ag0, Ap, F0, AN] = deal(zeros(maxlength, 1));
 [A, X] = deal(zeros(maxlength, M));
+
+Ancline1 = str2double(fgetl(AncID));
+Ancline2 = str2double(fgetl(AncID));
+XN = str2double(fgetl(AncID));
+C = textscan(AncID, '%f');
+AN = C{1};
 
 %create Ag0 array
 for i = 1:length
@@ -43,6 +51,10 @@ for i = 1:length-1
     end
 end
 
+%replace Ag0 with Anc
+Anc = Ag0;
+Ag0 = min(0, Ag0);
+
 %create Agp array
 
 Agpdata = textscan(AgpID, '%f %f %s');
@@ -54,8 +66,17 @@ for i = 1:length
     v(i) = Agpdata{2}(i+1);
 end
 
+reached_peak = false;
 for i = 1:length-1
     s = Agpdata{3}(i+2);
+    %edit Ap to make consonant voiced
+    if v(i) == 0.2
+        if reached_peak == false
+            start_peak = x(i);
+            reached_peak = true;
+        else end_peak = x(i);
+        end
+    end
     if strcmp(s, 'COS') == 1
         t = 'pchip';
     else t = 'linear';
@@ -66,6 +87,9 @@ for i = 1:length-1
         Ap(x(i):x(i+1)-1) = interp1(x, v, x(i):x(i+1)-1, t);
     end
 end
+%make consonant voiced
+Ap(start_peak:end_peak) = .2;
+
 %create F0 array
 
 F0data = textscan(F0ID, '%f %f %s');
@@ -129,6 +153,7 @@ if size(A,1) < maxlength
     Ag0 = Ag0(1:size(A,1));
     Ap = Ap(1:size(A,1));
     F0 = F0(1:size(A,1));
+    AN = AN(1:size(A,1));
 else
     A = A(1:maxlength,:);
     X = X(1:maxlength,:);
@@ -139,5 +164,6 @@ fclose(AFID);
 fclose(Ag0ID);
 fclose(AgpID);
 fclose(F0ID);
+fclose(AncID);
 
 end

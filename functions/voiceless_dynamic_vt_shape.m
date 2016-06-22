@@ -5,10 +5,10 @@ if N ~= size(X, 1) || N ~= length(Ag0) || N ~= length(Ap) || N ~= length(F0)
    error('Array dimensions are mismatched');
 end
 
-%A = max(A, .1);
+%A = max(A, .0001);
 M = size(A,2);
 maxAp = max(Ap);
-Fs = 10000;
+Fs = 15000;
 
 rho = 1.14 * 10^-3;
 c = 3.5 * 10^4;
