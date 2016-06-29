@@ -64,7 +64,7 @@ for j = 2:Nlength
     ALN(j) = (1/T) * rho * XDA;
     RN(j) = 4 * pi * mu * AXinv / AN(j);
     CN(j) = (2/T) * AX / (rho * c^2);
-    WRN(j) = bval / sqrt(pi) * AXinv;
+    WRN(j) = bval * sqrt(pi) * AXinv;
     WLN(j) = 2 / 5 * m *AXinv / (T * sqrt(pi));
     WCN(j) = T/(2*sqrt(pi)) * k * AXinv;
     GWN(j) = 1.0 / (WRN(j) + WLN(j) + WCN(j));
@@ -99,7 +99,7 @@ for j = 2:M
     H(j) = - (L(j-1) + L(j) + R(j-1) + R(j) + b(j-1) + b(j));
 end
 
-    %H(K) = -(b(K) + L(K) + R(K));
+    H(K) = -(b(K) + L(K) + R(K));
     %H(K+1) = -(b(K+1) + L(K+1) + R(K+1));
     
     Grad = 9 * pi^2 * A(n,M) / (128 * rho * c);
@@ -113,7 +113,7 @@ XDA = XN / Anc(n);
 ALN(1) = (1/T) * rho * XDA;
 RN(1) = 4 * pi * mu * AXinv / Anc(n);
 CN(1) = (2/T) * AX / (rho * c^2);
-WRN(1) = bval / sqrt(pi) * AXinv;
+WRN(1) = bval * sqrt(pi) * AXinv;
 WLN(1) = 2 / 5 * m *AXinv / (T * sqrt(pi));
 WCN(1) = T/(2*sqrt(pi)) * k * AXinv;
 GWN(1) = 1.0 / (WRN(1) + WLN(1) + WCN(1));
