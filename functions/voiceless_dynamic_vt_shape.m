@@ -1,4 +1,4 @@
-function signal = voiceless_dynamic_vt_shape(A, X, Ag0, Ap, F0)
+function signal = voiceless_dynamic_vt_shape(A, X, Ag0, Ap, F0, Fs)
 
 N = size(A, 1);
 if N ~= size(X, 1) || N ~= length(Ag0) || N ~= length(Ap) || N ~= length(F0)
@@ -8,7 +8,7 @@ end
 %A = max(A, .0001);
 M = size(A,2);
 maxAp = max(Ap);
-Fs = 15000;
+%Fs = 15000;
 
 rho = 1.14 * 10^-3;
 c = 3.5 * 10^4;
@@ -64,7 +64,8 @@ for j = 1:M
     Ud(j) = (A(n,j)*X(n,j) - A(n-1,j)*X(n-1,j)) / T;
     %Namp(j) = Udc * Udc / A(n,j) * 5 * 2 * 10^-8;
 end
-    Namp(min(Xc+1,M)) = Udc * Udc / A(n,min(Xc+1,M)) * 5 * 2 * 10^-8; %insert noise at segment after constriction
+    %Namp(min(Xc+1,M)) = Udc * Udc / A(n,min(Xc+1,M)) * 5 * 2 * 10^-8; %insert noise at segment after constriction
+    Namp(min(Xc+1,M)) = Udc * Udc / A(n,Xc) * 5 * 2 * 10^-8;
     H(1) = -(Lg + L(1) + Rg + R(1) + b(1));
 
 for j = 2:M
