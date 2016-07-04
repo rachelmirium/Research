@@ -9,6 +9,7 @@ t1 = .36 * T0;
 t2 = .26 * T0;
 a = pi / t1;
 b = 1.0 / (1.0 - cos(a * t2));
+amp = Ap(1);
 
 n1 = 0;
 
@@ -17,9 +18,9 @@ for n = 1:N
     t = (n - n1) * dt; 
       
     if t < t1
-        Agp(n) = .5 * Ap(n) * (1.0 - cos(a * t));
+        Agp(n) = .5 * amp * (1.0 - cos(a * t));
     elseif t < (t1 + t2)
-        Agp(n) = Ap(n) * (1.0 - b + b * cos(a * (t - t1)));
+        Agp(n) = amp * (1.0 - b + b * cos(a * (t - t1)));
     else
         Agp(n) = .00001;
     end
@@ -34,6 +35,7 @@ for n = 1:N
         t2 = .26 * T0;
         a = pi / t1;
         b = 1.0 / (1.0 - cos(a * t2));
+        amp = Ap(n);
         
     end;
   

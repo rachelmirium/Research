@@ -218,7 +218,7 @@ QN(Nlength+1) = 2 * ALN(Nlength) * UN(Nlength+1) - QN(Nlength+1);
 VN(Nlength+1) = -2 * RADSN * PN(Nlength+1) + VN(Nlength+1);
     
 end
-plot(Unose)
+%plot(Unose)
 signal = diff(Ulips + Unose);% (diff(U2) - mean(diff(U2)))/std(diff(U2));
-%plot(signal);
+plot(signal);
 soundsc(signal, Fs);

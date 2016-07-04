@@ -8,7 +8,7 @@ end
 %A = max(A, .0001);
 M = size(A,2);
 maxAp = max(Ap);
-Fs = 15000;
+Fs = 10000;
 
 rho = 1.14 * 10^-3;
 c = 3.5 * 10^4;
