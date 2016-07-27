@@ -34,15 +34,10 @@ N=length(Ag);
 [Ulips, Unose] = deal(zeros(N,1));
 
 Ud = 0; 
-Q(1) = 0; Q(2) = 0;
-V(1) = 0; V(2) = 0;
-Vc(1) = 0; Qwl(1) = 0; Qwc(1) = 0;
 QNC = 0;
 UNC = 0;
 [Namp, L, R, C, Lw, Rw, Cw, Yw, b, Ud, H, V, F, U, Q, P, Vc, u3, Qwl, Qwc, Q, R] = deal(zeros(M+1,1));
 [UN, PN, ALN, CN, WRN, WLN, WCN, GWN, BN, HN, RN, QN, VCN, QWLN, QWCN, VN, FN, QN, RN] = deal(zeros(Nlength+1,1));
-U(1)=1;
-U(2)=2;
 
 for n=2:N
     [Ac, Xc] = min(A(n,:));
@@ -56,7 +51,7 @@ for n=2:N
     AN1 = Anc(n) * XN;
     Lg = (2/T) * rho * glt_thck / Ag(n);
     Rg = (12 * mu * glt_len^2 * glt_thck) / (Ag(n)^3) + ((1.38/2) * rho * abs(U(1)) / (Ag(n)^2));
-    
+
 for j = 2:Nlength
     AX = AN(j)*XN;
     AXinv = 1.0 / AX;
@@ -89,8 +84,9 @@ for j = 1:M
     if j >= 2
         H(j) = - (L(j-1) + L(j) + R(j-1) + R(j) + b(j-1) + b(j));
     end
-    Ud(j) = (A(n,j)*X(n,j) - A(n-1,j)*X(n-1,j)) / T;
+    Ud(j) = -Fs * (A(n,j)*X(n,j) - A(n-1,j)*X(n-1,j));
 end
+
     Namp(min(Xc+1,M)) = Udc * Udc / A(n,min(Xc+1,M)) * 5 * 2 * 10^-8; %insert noise at segment after constriction
     H(1) = -(Lg + L(1) + Rg + R(1) + b(1));
     HNC = -(b(K) + L(K) + R(K));
@@ -144,34 +140,67 @@ end
 
 FN(Nlength+1) = -BN(Nlength) * VN(Nlength) + BN(Nlength+1) * VN(Nlength+1) - QN(Nlength+1);
 
-% HNs = zeros(Nlength+1,Nlength+2);
-% HNs(1,1) = 1;
-% HNs(1,2) = HN(1);
-% HNs(1,3) = BN(1);
-% for j = 2:Nlength
-%     HNs(j,j) = BN(j-1);
-%     HNs(j,j+1) = HN(j);
-%     HNs(j,j+2) = BN(j);
-% end
-% HNs(Nlength+1,Nlength+1) = BN(Nlength);
-% HNs(Nlength+1,Nlength+2) = HN(Nlength+1);
-% UN = pinv(HNs) * FN;
-% 
-% Hs = zeros(M+1);
-% Hs(1,1) = H(1);
-% Hs(1,2) = b(1);
-% for j=2:M
-%     Hs(j, j-1) = b(j-1);
-%     Hs(j,j) = H(j);
-%     Hs(j, j+1) = b(j);
-% end
-% Hs(M+1, M) = b(M);
-% Hs(M+1, M+1) = H(M+1);
-% 
-% UNC = U(K+1) + UN(1);
-% PNC = PN(1);
-% 
-% U = inv(Hs) * F;
+[U, UN, UNC, PNC] = solve(H, b, F, U, M, HN, BN, FN, UN, Nlength, K, HNC, FNC);
+
+Ulips(n) = U(M+1);
+Unose(n) = UN(Nlength+1);
+    
+    % glottis
+    Q(1) = 2 * (Lg + L(1)) * U(1) - Q(1);
+    QNC = 2 * L(K) * UNC - QNC;
+    Q(K+1) = 2*L(K+1) * U(K+1) - Q(K+1);
+    
+for j = 1:M
+   if j ~= K
+          P(j) = b(j) * (U(j) - U(j+1) - Ud(j) + V(j)) + rand(1,1) * Namp(j);
+   else 
+       P(K) = b(K) * (U(K) - UNC - Ud(K) + V(K)) + rand(1,1) * Namp(j);
+   end
+   if j ~= 1 && j ~= K+1
+       Q(j) = 2 * (L(j-1) + L(j))*U(j) - Q(j);
+   end
+   Vc(j) = 2 * C(j) * P(j) - Vc(j);           
+   u3 = Yw(j) * (P(j) + Qwl(j) - Qwc(j));     
+   Qwl(j) = 2 * Lw(j) * u3 - Qwl(j);          
+   Qwc(j) = 2 * Cw(j) * u3 + Qwc(j);
+end
+
+    % lips
+    P(M+1) = b(M+1) * (U(M+1) + V(M+1));
+    Q(M+1) = 2 * L(M) * U(M+1) - Q(M+1);
+    V(M+1) = -2 * Srad * P(M+1) + V(M+1);
+    
+QN(1) = 2*ALN(1)*UN(1) - QN(1);
+for j = 1:Nlength
+    PN(j) = BN(j)*(UN(j)-UN(j+1) + VN(j));
+    if j == 1
+        PN(1) = PN(1) - BN(1) * UDN1;
+    else QN(j) = 2 * (ALN(j-1) + ALN(j)) * UN(j) - QN(j);
+    end
+    VCN(j) = 2 * CN(j) * PN(j) - VCN(j);
+    U3N = GWN(j) * (PN(j)+QWLN(j)-QWCN(j));
+    QWCN(j) = 2 * WCN(j) * U3N + QWCN(j);
+    QWLN(j) = 2 * WLN(j) * U3N - QWLN(j);
+end
+
+PN(Nlength+1) = BN(Nlength+1) * (UN(Nlength+1) + VN(Nlength+1));
+QN(Nlength+1) = 2 * ALN(Nlength) * UN(Nlength+1) - QN(Nlength+1);
+VN(Nlength+1) = -2 * RADSN * PN(Nlength+1) + VN(Nlength+1);
+    
+end
+
+signal = diff(Ulips + Unose);
+plot(signal);
+soundsc(signal, Fs);
+
+end
+
+function [U, UN, UNC, PNC] = solve(H, b, F, U, M, HN, BN, FN, UN, Nlength, K, HNC, FNC)
+
+Q = zeros(M+1, 1);
+R = zeros(M+1, 1);
+QN = zeros(Nlength+1, 1);
+RN = zeros(Nlength+1, 1);
 
 QN(Nlength+1) = HN(Nlength+1);
 RN(Nlength+1) = FN(Nlength+1);
@@ -214,56 +243,4 @@ for j = K-1:-1:1
     U(j) = (R(j) - b(j) * U(j+1)) / Q(j);
 end
 
-
-Ulips(n) = U(M+1);
-Unose(n) = UN(Nlength+1);
-    
-    % glottis
-    Q(1) = 2 * (Lg(1) + L(1)) * U(1) - Q(1);
-    QNC = 2 * L(K) * UNC - QNC;
-    Q(K+1) = 2*L(K+1) * U(K+1) - Q(K+1);
-    
-for j = 1:M
-   if j ~= K
-          P(j) = b(j) * (U(j) - U(j+1) - Ud(j) + V(j)) + rand(1,1) * Namp(j);
-   else 
-       P(K) = b(K) * (U(K) - UNC - Ud(K) + V(K)) + rand(1,1) * Namp(j);
-   end
-   if j ~= 1 && j ~= K+1
-       Q(j) = 2 * (L(j-1) + L(j))*U(j) - Q(j);
-   end
-   Vc(j) = 2 * C(j) * P(j) - Vc(j);           
-   u3(j) = Yw(j) * (P(j) + Qwl(j) - Qwc(j));     
-   Qwl(j) = 2 * Lw(j) * u3(j) - Qwl(j);          
-   Qwc(j) = 2 * Cw(j) * u3(j) + Qwc(j);
 end
-
-    % lips
-    P(M+1) = b(M+1) * (U(M+1) + V(M+1));
-    Q(M+1) = 2 * L(M) * U(M+1) - Q(M+1);
-    V(M+1) = -2 * Srad * P(M+1) + V(M+1);
-    
-QN(1) = 2*ALN(1)*UN(1) - QN(1);
-PN(1) = PN(1) - BN(1) * UDN1;
-VCN(1) = 2 * CN(1) * PN(1) - VCN(1);
-U3N = GWN(1) * (PN(1)+QWLN(1)-QWCN(1));
-QWCN(1) = 2 * WCN(1) * U3N + QWCN(1);
-QWLN(1) = 2 * WLN(1) * U3N + QWLN(1);
-for j = 2:Nlength
-    PN(j) = BN(j)*(UN(j)-UN(j+1) + VN(j));
-    QN(j) = 2 * (ALN(j-1) + ALN(j)) * UN(j) - QN(j);
-    VCN(j) = 2 * CN(j) * PN(j) - VCN(j);
-    U3N = GWN(j) * (PN(j)+QWLN(j)-QWCN(j));
-    QWCN(j) = 2 * WCN(j) * U3N + QWCN(j);
-    QWLN(j) = 2 * WLN(j) * U3N + QWLN(j);
-end
-
-PN(Nlength+1) = BN(Nlength+1) * (UN(Nlength+1) + VN(Nlength+1));
-QN(Nlength+1) = 2 * ALN(Nlength) * UN(Nlength+1) - QN(Nlength+1);
-VN(Nlength+1) = -2 * RADSN * PN(Nlength+1) + VN(Nlength+1);
-    
-end
-
-signal = diff(Ulips + Unose);
-plot(signal);
-soundsc(signal, Fs);
