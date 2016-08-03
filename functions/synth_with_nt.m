@@ -26,18 +26,19 @@ glt_thck=0.3;
 kc = 1.42;
 
 [Agp] = dynamic_glottal_area(Ap, F0, Fs);
-Agp = max(Agp,0.001);
+Agp = max(Agp,0.00001);
 Ag = Ag0 + Agp;
 
 N=length(Ag);
 
 [Ulips, Unose] = deal(zeros(N,1));
 
-Ud = 0; 
 QNC = 0;
 UNC = 0;
-[Namp, L, R, C, Lw, Rw, Cw, Yw, b, Ud, H, V, F, U, Q, P, Vc, u3, Qwl, Qwc, Q, R] = deal(zeros(M+1,1));
-[UN, PN, ALN, CN, WRN, WLN, WCN, GWN, BN, HN, RN, QN, VCN, QWLN, QWCN, VN, FN, QN, RN] = deal(zeros(Nlength+1,1));
+[Namp, L, R, C, Lw, Cw, Yw, b, Ud, H, V, F, U, Q, P, Vc, Qwl, Qwc] = deal(zeros(M+1,1));
+[UN, PN, ALN, CN, WLN, WCN, GWN, BN, HN, RN, QN, VCN, QWLN, QWCN, VN, FN] = deal(zeros(Nlength+1,1));
+
+AN1 = Anc(1) * XN;
 
 for n=2:N
     [Ac, Xc] = min(A(n,:));
@@ -48,9 +49,8 @@ for n=2:N
     r = roots(p);
     Udc = -1*r(1);
    
-    AN1 = Anc(n) * XN;
     Lg = (2/T) * rho * glt_thck / Ag(n);
-    Rg = (12 * mu * glt_len^2 * glt_thck) / (Ag(n)^3) + ((1.38/2) * rho * abs(U(1)) / (Ag(n)^2));
+    Rg = (12 * mu * glt_len^2 * glt_thck) / (Ag(n)^3) + ((1.38/2) * rho * abs(U(1)) / (Ag(n) * Ag(n)));
 
 for j = 2:Nlength
     AX = AN(j)*XN;
@@ -59,12 +59,14 @@ for j = 2:Nlength
     ALN(j) = (1/T) * rho * XDA;
     RN(j) = 4 * pi * mu * AXinv / AN(j);
     CN(j) = (2/T) * AX / (rho * c^2);
-    WRN(j) = bval / sqrt(pi) * AXinv;
+    WRN = bval / sqrt(pi) * AXinv;
     WLN(j) = 2 / 5 * m *AXinv / (T * sqrt(pi));
     WCN(j) = T/(2*sqrt(pi)) * k * AXinv;
-    GWN(j) = 1.0 / (WRN(j) + WLN(j) + WCN(j));
+    GWN(j) = 1.0 / (WRN + WLN(j) + WCN(j));
     BN(j) = 1.0 / (CN(j) + GWN(j));
-    HN(j) = -(ALN(j-1) + ALN(j) + RN(j-1) + RN(j) + BN(j-1) + BN(j));
+    if j ~= 2
+        HN(j) = -(ALN(j-1) + ALN(j) + RN(j-1) + RN(j) + BN(j-1) + BN(j));
+    end
 end
 
 RADSN = T*(1.5 * pi * sqrt(pi * AN(Nlength))) / (8 * rho);
@@ -77,24 +79,24 @@ for j = 1:M
     R(j) = 4 * pi * mu  / (X(n,j) * (A(n,j))^2);
     C(j) = (2/T) * X(n,j) * A(n,j) / (rho * c^2);
     Lw(j) = 2 * m / (T * A(n,j) * X(n,j) * sqrt(pi));
-    Rw(j) = bval / (A(n,j) * X(n,j) * sqrt(pi));
+    Rw = bval / (A(n,j) * X(n,j) * sqrt(pi));
     Cw(j) = T/(2*sqrt(pi)) * k / (A(n,j) * X(n,j));
-    Yw(j) = 1 / (Lw(j) + Cw(j) + Rw(j));
-    b(j) = 1 / (C(j) + Yw(j));
+    Yw(j) = 1.0 / (Lw(j) + Cw(j) + Rw);
+    b(j) = 1.0 / (C(j) + Yw(j));
     if j >= 2
         H(j) = - (L(j-1) + L(j) + R(j-1) + R(j) + b(j-1) + b(j));
     end
     Ud(j) = -Fs * (A(n,j)*X(n,j) - A(n-1,j)*X(n-1,j));
 end
 
-    Namp(min(Xc+1,M)) = Udc * Udc / A(n,min(Xc+1,M)) * 5 * 2 * 10^-8; %insert noise at segment after constriction
+    Namp(min(Xc+1,M)) = Udc * Udc / A(n,Xc) * 5 * 2 * 10^-8; %insert noise at segment after constriction
     H(1) = -(Lg + L(1) + Rg + R(1) + b(1));
     HNC = -(b(K) + L(K) + R(K));
     H(K+1) = -(b(K+1) + L(K+1) + R(K+1));
     
     Grad = 9 * pi^2 * A(n,M) / (128 * rho * c);
     Srad = T*(1.5 * pi * sqrt(pi * A(n,M))) / (8 * rho);
-    b(M+1) = 1 / (Srad + Grad);
+    b(M+1) = 1.0 / (Srad + Grad);
     H(M+1) = -(b(M+1) + b(M) + R(M) + L(M)); 
     
 AX = Anc(n)*XN;
@@ -103,13 +105,13 @@ XDA = XN / Anc(n);
 ALN(1) = (1/T) * rho * XDA;
 RN(1) = 4 * pi * mu * AXinv / Anc(n);
 CN(1) = (2/T) * AX / (rho * c^2);
-WRN(1) = bval / sqrt(pi) * AXinv;
-WLN(1) = 2 / 5 * m *AXinv / (T * sqrt(pi));
+WRN = bval / sqrt(pi) * AXinv;
+WLN(1) = 2 * m *AXinv / (T * sqrt(pi));
 WCN(1) = T/(2*sqrt(pi)) * k * AXinv;
-GWN(1) = 1.0 / (WRN(1) + WLN(1) + WCN(1));
+GWN(1) = 1.0 / (WRN + WLN(1) + WCN(1));
 BN(1) = 1.0 / (CN(1) + GWN(1));
 HN(1) = -(BN(1) + ALN(1) + RN(1));
-HN(2) = -(BN(1) + BN(2) + ALN(1) + ALN(2) + RN(1) + RN(1));
+HN(2) = -(BN(1) + BN(2) + ALN(1) + ALN(2) + RN(1) + RN(2));
 UDN1 = -Fs * (AX-AN1);
 AN1 = AX;
     
@@ -140,7 +142,7 @@ end
 
 FN(Nlength+1) = -BN(Nlength) * VN(Nlength) + BN(Nlength+1) * VN(Nlength+1) - QN(Nlength+1);
 
-[U, UN, UNC, PNC] = solve(H, b, F, U, M, HN, BN, FN, UN, Nlength, K, HNC, FNC);
+[U, UN, UNC] = solve(H, b, F, U, M, HN, BN, FN, UN, Nlength, K, HNC, FNC);
 
 Ulips(n) = U(M+1);
 Unose(n) = UN(Nlength+1);
@@ -195,7 +197,7 @@ soundsc(signal, Fs);
 
 end
 
-function [U, UN, UNC, PNC] = solve(H, b, F, U, M, HN, BN, FN, UN, Nlength, K, HNC, FNC)
+function [U, UN, UNC] = solve(H, b, F, U, M, HN, BN, FN, UN, Nlength, K, HNC, FNC)
 
 Q = zeros(M+1, 1);
 R = zeros(M+1, 1);
