@@ -153,8 +153,8 @@ for j = 1:M
     Av = Ai(:,j);
     Xv = Xid(:,j);
     for i = 1:width-1
-        A(x(i):x(i+1)-1,j) = interp1(x, Av, x(i):x(i+1)-1, 'pchip');
-        X(x(i):x(i+1)-1,j) = interp1(x, Xv, x(i):x(i+1)-1, 'pchip');
+        A(x(i):x(i+1)-1,j) = interp1(x, Av, x(i):x(i+1)-1, 'linear');
+        X(x(i):x(i+1)-1,j) = interp1(x, Xv, x(i):x(i+1)-1, 'linear');
     end
 end
 

@@ -113,13 +113,14 @@ for i = 1:length-1
         F0(x(i):x(i+1)-1) = interp1(x, v, x(i):x(i+1)-1, t);
     end
 end
+%F0(1:end) = 100;
 %create area function
 
 width = str2double(fgetl(AFID));
 length = str2double(fgetl(AFID));
 Adata = zeros(width+1, length);
 Xdata = zeros(width+1, length);
-[Ai, Xid] = deal(zeros(width+1, M));
+[Ai, Xid] = deal(zeros(width+1, 100));
 x = transpose(1:scale*10:(width+1)*scale*10);
 for i = 0:width
     areafile = strcat(folder, '/', num2str(i*10), '.ARE');
@@ -152,7 +153,7 @@ if size(A,1) < maxlength
     Ag0 = Ag0(1:size(A,1));
     Ap = Ap(1:size(A,1));
     F0 = F0(1:size(A,1));
-    Anc = Anc(1:size(A,1));
+    AN = AN(1:size(A,1));
 else
     A = A(1:maxlength,:);
     X = X(1:maxlength,:);
@@ -163,6 +164,6 @@ fclose(AFID);
 fclose(Ag0ID);
 fclose(AgpID);
 fclose(F0ID);
-fclose(NTID);
+fclose(AID);
 
 end
