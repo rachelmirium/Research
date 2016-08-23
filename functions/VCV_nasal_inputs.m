@@ -38,6 +38,20 @@ for i = 1:length
     v(i) = Ag0data{2}(i+1);
 end
 
+reached_peak = false;
+for i = 1:length-1
+    s = Ag0data{3}(i+2);
+    if v(i) == 0.4
+        reached_peak = true;
+    end
+    if v(i) == 0.0 && reached_peak == true
+%keep nasal tract open for longer
+        x(i-1) = x(i-1) + 40 * scale;
+        x(i) = x(i) + 40 * scale;
+        break
+    end
+end
+
 for i = 1:length-1
     s = Ag0data{3}(i+2);
     if strcmp(s, 'COS') == 1
