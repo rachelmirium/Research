@@ -25,7 +25,6 @@ kc = 1.42;
 [Agp] = dynamic_glottal_area(Ap, F0, Fs);
 Agp = max(Agp,0.001);
 Ag = Ag0 + Agp;
-plot(Ag);
 figure
 
 N=length(Ag);
