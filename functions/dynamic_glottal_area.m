@@ -1,4 +1,5 @@
 function [Agp] = dynamic_glottal_area(Ap, F0, Fs)
+%Create glottal pulse with given amplitude and frequency
 
 N = length(Ap);
 Agp = zeros(N, 1);
@@ -15,6 +16,7 @@ n1 = 0;
 
 for n = 1:N
 
+%determine whether we are at the incline or descent of current peak
     t = (n - n1) * dt; 
       
     if t < t1
