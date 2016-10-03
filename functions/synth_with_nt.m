@@ -1,18 +1,24 @@
 function signal = synth_with_nt(A, X, Ag0, Ap, F0, Anc, AN, XN, Fs)
+%Takes input created in VCV_nasal_inputs, as well as sampling frequency Fs
+
+%Error checking for inputs
 
 N = size(A, 1);
 if N ~= size(X, 1) || N ~= length(Ag0) || N ~= length(Ap) || N ~= length(F0)
    error('Array dimensions are mismatched');
 end
 
+%avoid division by zero errors
 Anc = max(Anc, .00001);
 
 Nlength = size(AN, 1);
 
+%indicate nasal branching point
 M = size(A,2);
 K = M/2;
 maxAp = max(Ap);
 
+%constants
 rho = 1.14 * 10^-3;
 c = 3.5 * 10^4;
 mu = 1.86 * 10^-4;
@@ -25,12 +31,15 @@ glt_len=1.2;
 glt_thck=0.3;
 kc = 1.42;
 
+%create simulated glottal pulse with given amplitude and frequency
 [Agp] = dynamic_glottal_area(Ap, F0, Fs);
 Agp = max(Agp,0.00001);
+%combine fast-varying and slow-varying elements of glottal area
 Ag = Ag0 + Agp;
 
 N=length(Ag);
 
+%initialize output
 [Ulips, Unose] = deal(zeros(N,1));
 
 QNC = 0;
@@ -40,8 +49,12 @@ UNC = 0;
 
 AN1 = Anc(1) * XN;
 
+%iterate through each timeframe
 for n=2:N
-    [Ac, Xc] = min(A(n,:));
+
+%calculate friction noise at the most constricted section of the vocal tract
+    [Ac, indmin] = min(A(n,:));
+    Xc = X(n, indmin));
     a1 = kc * rho * (1/(maxAp * maxAp) + 1/(Ac * Ac));
     b1 = 12 * glt_len * glt_len * glt_thck / (maxAp * maxAp * maxAp) + 8 * pi * mu * Xc / (Ac * Ac);
     c1 = -1 * Psub;
@@ -142,12 +155,14 @@ end
 
 FN(Nlength+1) = -BN(Nlength) * VN(Nlength) + BN(Nlength+1) * VN(Nlength+1) - QN(Nlength+1);
 
+%calculate velocity of air in each section of the vocal and nasal tract
 [U, UN, UNC] = solve(H, b, F, U, M, HN, BN, FN, UN, Nlength, K, HNC, FNC);
 
+%output is the volume velocity at the lips and nose
 Ulips(n) = U(M+1);
 Unose(n) = UN(Nlength+1);
     
-    % glottis
+%calculate P and PN: pressure at each section of the vocal and nasal tract
     Q(1) = 2 * (Lg + L(1)) * U(1) - Q(1);
     QNC = 2 * L(K) * UNC - QNC;
     Q(K+1) = 2*L(K+1) * U(K+1) - Q(K+1);
@@ -167,7 +182,7 @@ for j = 1:M
    Qwc(j) = 2 * Cw(j) * u3 + Qwc(j);
 end
 
-    % lips
+
     P(M+1) = b(M+1) * (U(M+1) + V(M+1));
     Q(M+1) = 2 * L(M) * U(M+1) - Q(M+1);
     V(M+1) = -2 * Srad * P(M+1) + V(M+1);
@@ -197,6 +212,7 @@ soundsc(signal, Fs);
 
 end
 
+%backwards elimination and substitution procedure to calculate volume velocities
 function [U, UN, UNC] = solve(H, b, F, U, M, HN, BN, FN, UN, Nlength, K, HNC, FNC)
 
 Q = zeros(M+1, 1);
